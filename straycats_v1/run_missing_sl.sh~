@@ -1,0 +1,3 @@
+while read seq; do
+    echo "$seq"
+done <missing_sl.txt
