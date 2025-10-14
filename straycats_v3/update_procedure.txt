@@ -1,0 +1,107 @@
+Find the potential SL candidates:
+
+On bifrost:
+
+Make a new vX directtory here:
+
+/disk/lif2/bwgref/science/stracats_vX
+
+Make a softlink to observing_schedule.txt
+
+cd /disk/lif2/bwgref/science/stracats_vX
+
+ln -s /home/nustar1/Web/NuSTAROperationSite/Operations/observing_schedule.txt
+
+This is ordered from "newest" to "oldest" from the start of the file.
+
+Edit the start/stop sequence IDs in loop_targets_observing.py to do just the year range that you want to do. E.g.,
+
+60802020004 is the first observation (most recent) one to do for 2022.
+80601602002 is the oldest one to do for 2022
+
+Change the outfile to be stray_light_det_vX.txt
+
+Run loop_targets_observing.py (will take a while, recommend doing screen and running it detached).
+
+Will produce the stray_light_det_vX.txt
+
+Then you'll want to run the find_sl_diagnostic.ipynb
+
+This produces a number of output text files where the SL is above expectations. Every entry will have a "??" in the SL source column to start with.
+
+
+
+
+Validate and identify the SL candidates:
+
+Start a new "merged" CSV file straycatsX_merged.csv
+
+Start with the "strong_SL_FPMA.txt" output file and copy the information into a new CSV
+
+For each row, go to
+
+cd /disk/lif2/bwgref/science/stracats_vX
+
+Copy run_sl.sh from a previous location.
+
+Do ./run_sl.sh SEQID to generate the colormap image for this field.
+
+If SL looks present, then do the following:
+
+On RAN (because this requires IDL and the IDL build on bifrost is broken):
+
+Checkout nustar_stray_light (I have this in /home/nustar1/bwgref/nustar_stray_light now)
+
+run_sl_seqid does the "normal" SL check (BAT catalog)
+
+run_sl_seqidv2 does the "any transient ever detected by BAT" catalog
+
+Note that there are some tweaks that are *not* checked into github...need to fix that.
+
+Things of note:
+
+	Lots of 4U 1630-47
+	Couple of SL sources on GRS 1915...
+	Also lots of 4U 1700-377
+	Unknown in 30801014002 (complicated...)
+	First Sco X-1...
+	Unkown in 60801024002
+	Couple of new bursters
+	Unkown in 60464171002
+	Unknown on 30801005002
+
+
+
+Done strong ones (dominated by Crab SL)
+
+Done 0123 A
+
+Done 0123 B
+
+Done 12A
+Done 12B
+
+
+Done 23A
+Done 23B
+
+Done 01A
+Done 01B
+
+Done: 03A
+Done: 03B
+
+Done: Doing 1A
+Done : Doing 1B
+
+Done: Doing 2A
+Done Doing 2B
+
+Done 3A
+Done 3B
+
+
+Go run find_sl_diagnostic_lvl2.ipynb and see if it turns up anything new. Can probably
+just look at the jupyter notebook log.
+
+
