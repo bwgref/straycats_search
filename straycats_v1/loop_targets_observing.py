@@ -1,0 +1,92 @@
+from astropy.io.fits import getdata, getheader
+import numpy as np
+import glob
+import os
+from nustar_gen import info, utils
+from math import modf
+import pickle
+
+import astropy.units as u
+from datetime import datetime
+
+ns = info.NuSTAR()
+limit = 3*u.arcmin
+limit_pix = (limit / ns.pixel).cgs
+
+ns = info.NuSTAR()
+day0 = ns.launch
+
+
+indir = '/home/nustar1/nustarops/fltops/'
+
+socdirs = glob.glob(f'{indir}*')
+set=False
+
+
+last_write = 0.
+
+outfile = f'stray_light_det.txt'
+                 
+low_pi = utils.energy_to_chan(3)
+high_pi = utils.energy_to_chan(20)
+
+ctr = 0
+with open(outfile, 'w') as f2:
+    with open('observing_schedule.txt') as f:
+        for line in f:
+            if line.startswith(';'):
+                continue
+            fields = line.split()
+
+            seqid = fields[2]
+            ss = seqid[0:8]
+            socn = fields[3]
+
+            socd = f'{indir}/{ss}_{socn}/{seqid}/'
+            print(socd)
+            for mod in ['A', 'B']:
+
+                
+                evf = f'{socd}/event_cl/nu{seqid}{mod}01_cl.evt'
+                if not os.path.isfile(evf):
+                    continue
+                sky2det = f'{socd}/event_cl//nu{seqid}_sky2det{mod}.fits'
+                if not os.path.isfile(sky2det):
+                    continue
+
+                ev, hdr = getdata(evf, header=True)
+                src = getdata(sky2det)
+            
+                xr = np.interp(ev['TIME'], src['TIME'], src['DET1X'])
+                yr = np.interp(ev['TIME'], src['TIME'], src['DET1Y'])
+                dr = np.sqrt((ev['DET1X'] - xr)**2 + (ev['DET1Y'] - yr)**2)
+
+                filt = np.where( (dr > limit_pix) &
+                                 (ev['PI'] > low_pi) &
+                                 (ev['PI'] < high_pi))
+                src_filt = np.where( (dr < limit_pix) &
+                                 (ev['PI'] > low_pi) &
+                                 (ev['PI'] < high_pi) )
+
+                bgd_hist, edges = np.histogram(ev['DET_ID'][filt], bins = 4)
+                bgd_rate = [x / hdr['EXPOSURE'] for x in bgd_hist]
+                src_rate = len(src_filt[0]) / hdr['EXPOSURE']
+                out_string = f'{seqid} {mod} {src_rate} '
+                for x in bgd_rate:
+                    out_string = f"{out_string} {x}"
+                out_string += '\n'
+                f2.write(out_string)
+
+# 
+#
+#         if ( len(stray_light['data']) - last_write) > 100:
+#             print(len(stray_light['data']))
+#             print('Dumping data')
+#             last_write=len(stray_light['data'])
+#             with open(outfile, 'wb') as f:
+#                 pickle.dump(stray_light, f)
+# 
+# print('Dumping data')
+# last_write=len(stray_light)
+# with open(outfile, 'wb') as f:
+#     pickle.dump(stray_light, f)
