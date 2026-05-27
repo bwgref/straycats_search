@@ -1,0 +1,1 @@
+/home/nustar1/Web/NuSTAROperationSite/Operations/observing_schedule.txt
